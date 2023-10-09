@@ -12,5 +12,5 @@ PREREQUISITES:
 
 CONFIGURATION:
 
-- .env
+- config.json
 - nodemon (for live server refresh)
