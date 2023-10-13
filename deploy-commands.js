@@ -40,6 +40,8 @@ const rest = new REST().setToken(token);
     );
 
     // The put method is used to fully refresh all commands in the guild with the current set
+
+    //To deploy global commands irrespictive of the guild/channel bot is available in, simply adjust this route to .applicationCommands(clientId)
     const data = await rest.put(
       Routes.applicationGuildCommands(clientId, guildId),
       { body: commands }
@@ -53,3 +55,9 @@ const rest = new REST().setToken(token);
     console.error(error);
   }
 })();
+
+/* 
+---UNDERSTANDING THE CODE---
+
+
+*/

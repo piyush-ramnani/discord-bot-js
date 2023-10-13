@@ -1,20 +1,12 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { Client, Events, Collection, GatewayIntentBits } = require("discord.js");
+const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const { token } = require("./config.json");
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-//runs once when client is ready
-client.once(Events.ClientReady, (c) => {
-  console.log(`Ready! logged in as ${c.user.tag}`);
-});
-
-//Logging in discord
-client.login(token);
-
+//--COMMANDS HANDLER--
 client.commands = new Collection();
-
 //connecting to the commands folder
 const foldersPath = path.join(__dirname, "commands");
 const commandFolders = fs.readdirSync(foldersPath);
@@ -38,33 +30,63 @@ for (const folder of commandFolders) {
   }
 }
 
-//command listener
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-  console.log(interaction);
+//----------------------------------------
+// //runs once when client is ready
+// client.once(Events.ClientReady, (c) => {
+//   console.log(`Ready! logged in as ${c.user.tag}`);
+// });
+//----------------------------------------
 
-  const command = interaction.client.commands.get(interaction.commandName);
+//Logging in discord
+client.login(token);
 
-  if (!command) {
-    console.error(`No command matching ${interaction.commandName} was found.`);
-    return;
+//--------------------------------------------------------------
+//Initial interaction function -> ./events/interactionCreate
+
+// client.on(Events.InteractionCreate, async (interaction) => {
+//   if (!interaction.isChatInputCommand()) return;
+//   console.log(interaction);
+
+//   const command = interaction.client.commands.get(interaction.commandName);
+
+//   if (!command) {
+//     console.error(`No command matching ${interaction.commandName} was found.`);
+//     return;
+//   }
+
+//   try {
+//     await command.execute(interaction);
+//   } catch (error) {
+//     console.error(error);
+//     if (interaction.replied || interaction.deferred) {
+//       await interaction.followUp({
+//         content: "There was an error while executing this command!",
+//         ephemeral: true,
+//       });
+//     } else {
+//       await interaction.reply({
+//         content: "There was an error while executing this command!",
+//         ephemeral: true,
+//       });
+//     }
+//   }
+//   //the interaction object contains all the information you need to dynamically retrieve and execute your commands!
+// });
+//----------------------------------------------------------------
+
+//--EVENT HANDLER--
+const eventsPath = path.join(__dirname, "events"); //read path in same directory
+const eventFiles = fs
+  .readdirSync(eventsPath)
+  .filter((file) => file.endsWith(".js"));
+//read filename in the directory
+
+for (const file of eventFiles) {
+  const filePath = path.join(eventsPath, file);
+  const event = require(filePath);
+  if (event.once) {
+    client.once(event.name, (...args) => event.execute(...args));
+  } else {
+    client.on(event.name, (...args) => event.execute(...args));
   }
-
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({
-        content: "There was an error while executing this command!",
-        ephemeral: true,
-      });
-    } else {
-      await interaction.reply({
-        content: "There was an error while executing this command!",
-        ephemeral: true,
-      });
-    }
-  }
-  //the interaction object contains all the information you need to dynamically retrieve and execute your commands!
-});
+}
